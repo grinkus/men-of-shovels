@@ -6,15 +6,18 @@ window.addEventListener('load', function () {
 		Man,
 		Rectangle,
 		Stage,
+		Victim,
 		canvas = document.getElementsByTagName('canvas')[0],
 		cliff,
 		controls,
 		graves = [],
 		graveWidth = 18,
 		ground,
+		maxGraveStage = 32,
 		player,
 		sprite,
-		stage;
+		stage,
+		victims = [];
 
 	Controls = (function () {
 
@@ -119,8 +122,8 @@ window.addEventListener('load', function () {
 
 		Grave.prototype.dig = function () {
 			this.stage += this.stage;
-			if ( this.stage > 16 )
-				this.stage = 16;
+			if ( this.stage > maxGraveStage )
+				this.stage = maxGraveStage;
 		};
 
 		Grave.prototype.getX = function () {
@@ -134,7 +137,7 @@ window.addEventListener('load', function () {
 		Grave.prototype.render = function () {
 			//stage.context.clearRect( this.x, ground.y, 10, 1 );
 			stage.context.beginPath();
-			stage.context.rect(this.getX() - this.getWidth() / 2, 412 * stage.coef, this.getWidth(), 2 * stage.coef);
+			stage.context.rect(this.getX() - this.getWidth() / maxGraveStage / 2 * this.stage, 412 * stage.coef, this.getWidth() / maxGraveStage * this.stage, 2 * stage.coef);
 			stage.context.fillStyle = '#fff782';
 			stage.context.fill();
 			stage.context.closePath();
@@ -371,6 +374,72 @@ window.addEventListener('load', function () {
 
 	})();
 
+	Victim = (function () {
+
+		var Victim = function ( power ) {
+
+			this.arc = 0.0001;
+			this.power = power;
+			this.x = 0;
+			this.y = 22;
+
+			stage.addChild( this );
+			victims.push( this );
+
+			function walkingTimeout() {
+				this.x += 1;
+				if ( this.x > 21 ) {
+					clearTimeout( this.timeout );
+					this.aiming = true;
+					this.timeout = setInterval(aimingTimeout.bind( this ), 100);
+				}
+			}
+
+			function aimingTimeout() {
+				console.log( this.arc, this.power );
+				this.arc += 0.01;
+				if ( this.arc > this.power ) {
+					clearTimeout( this.timeout );
+					this.aiming = false;
+					this.fall();
+				}
+			}
+
+			this.timeout = setInterval(walkingTimeout.bind( this ), 100);
+
+		};
+
+		Victim.prototype.getX = function () {
+			return Math.round( this.x * stage.coef );
+		};
+
+		Victim.prototype.getY = function () {
+			return Math.round( this.y * stage.coef );
+		};
+
+		Victim.prototype.fall = function () {
+			console.log( 'fall' );
+		};
+
+		Victim.prototype.render = function () {
+			stage.context.beginPath();
+			stage.context.rect( this.getX(), this.getY(), 18, 32 );
+			stage.context.fillStyle = 'red';
+			stage.context.fill();
+			stage.context.closePath();
+			if ( this.aiming ) {
+				stage.context.beginPath();
+				stage.context.moveTo( this.getX(), this.getY() );
+				stage.context.lineTo( stage.width * this.arc, 400 * stage.coef );
+				stage.context.stroke();
+				stage.context.closePath();
+			}
+		};
+
+		return Victim;
+
+	})();
+
 	stage = new Stage( canvas );
 	controls = new Controls();
 
@@ -451,5 +520,9 @@ window.addEventListener('load', function () {
 
 	setInterval( controls.react.bind( controls ), 50 );
 	setInterval( stage.update.bind( stage ), 10 );
+	new Victim( Math.random() );
+//	setInterval(function () {
+//		new Victim( Math.random() )
+//	}, 3000 );
 
 }, false);
