@@ -16,6 +16,22 @@ body {
 	text-align: center;
 }
 
+html {
+	background: #1F0D0D;
+	color: #ff8284;
+}
+
+canvas {
+	background: #ff8284; /* Old browsers */
+	background: -moz-linear-gradient(top, #ff8284 0%, #fff782 99%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff8284), color-stop(99%,#fff782)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ff8284 0%,#fff782 99%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #ff8284 0%,#fff782 99%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #ff8284 0%,#fff782 99%); /* IE10+ */
+	background: linear-gradient(to bottom, #ff8284 0%,#fff782 99%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ff8284', endColorstr='#fff782',GradientType=0 ); /* IE6-9 */
+}
+
 dt {
 	font-weight: bold;
 }
