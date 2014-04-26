@@ -1,22 +1,26 @@
 window.addEventListener('load', function () {
 	'use strict';
 
-	var canvas = document.getElementsByTagName('canvas')[0],
-		cliff,
-		Controls,
-		controls,
-		Stage,
-		stage,
+	var Controls,
+		Grave,
 		Man,
-		player,
 		Rectangle,
+		Stage,
+		canvas = document.getElementsByTagName('canvas')[0],
+		cliff,
+		controls,
+		graves = [],
+		graveWidth = 18,
 		ground,
-		sprite;
+		player,
+		sprite,
+		stage;
 
 	Controls = (function () {
 
 		var Controls = function () {
 			this.actions = {};
+			this.killed = [];
 			this.pressed = [];
 		};
 
@@ -48,9 +52,13 @@ window.addEventListener('load', function () {
 
 			for ( key in this.actions ) {
 				if ( Object.prototype.hasOwnProperty.call( this.actions, key ) ) {
-					if ( this.pressed.indexOf( parseInt( key ) ) >= 0 ) {
-						for ( i = this.actions[ key ].length - 1; i >= 0; i-- ) {
-							this.actions[ key ][ i ]();
+					if ( this.pressed.indexOf( parseInt( key ) ) !== -1 ) {
+						if ( this.killed.indexOf( parseInt( key ) ) === -1 ) {
+							for ( i = this.actions[ key ].length - 1; i >= 0; i-- ) {
+								this.actions[ key ][ i ]();
+							}
+							if ( parseInt( key ) === 32 )
+								this.killed.push( 32 );
 						}
 					}
 				}
@@ -59,11 +67,80 @@ window.addEventListener('load', function () {
 		};
 
 		Controls.prototype.release = function ( value ) {
+
 			if ( this.pressed.indexOf( value ) >= 0 )
 				this.pressed.splice( this.pressed.indexOf( value ), 1 );
+
+			if ( this.killed.indexOf( value ) >= 0 )
+				this.killed.splice( this.killed.indexOf( value ), 1 );
+
 		};
 
 		return Controls;
+
+	})();
+
+	Grave = (function () {
+
+		var Grave = function ( x ) {
+
+			this.x = x;
+			this.stage = 1;
+			this.timeout = undefined;
+			this.width = graveWidth;
+
+			this.decay();
+
+			graves.push( this );
+			stage.addChild( this );
+
+		};
+
+		Grave.prototype.checkStage = function () {
+			if ( this.stage === 0 ) {
+				clearTimeout( this.timeout );
+				this.timeout = undefined;
+				stage.removeChild( this );
+				graves.splice( graves.indexOf( this ), 1 );
+			} else {
+				this.stage -= 1;
+				this.decay();
+			}
+		};
+
+		Grave.prototype.decay = function () {
+			if ( ! this.timeout ) {
+				this.timeout = setTimeout(function () {
+					this.timeout = undefined;
+					this.checkStage();
+				}.bind( this ), 500 );
+			}
+		};
+
+		Grave.prototype.dig = function () {
+			this.stage += this.stage;
+			if ( this.stage > 16 )
+				this.stage = 16;
+		};
+
+		Grave.prototype.getX = function () {
+			return Math.round( this.x * stage.coef );
+		};
+
+		Grave.prototype.getWidth = function () {
+			return Math.round( this.width * stage.coef );
+		};
+
+		Grave.prototype.render = function () {
+			//stage.context.clearRect( this.x, ground.y, 10, 1 );
+			stage.context.beginPath();
+			stage.context.rect(this.getX() - this.getWidth() / 2, 412 * stage.coef, this.getWidth(), 2 * stage.coef);
+			stage.context.fillStyle = '#fff782';
+			stage.context.fill();
+			stage.context.closePath();
+		};
+
+		return Grave;
 
 	})();
 
@@ -78,6 +155,23 @@ window.addEventListener('load', function () {
 			this.width = 18;
 			this.height = 32;
 			this.speed = 0;
+
+		};
+
+		Man.prototype.dig = function () {
+
+			var grave = false,
+				i;
+
+			for ( i = graves.length - 1; i >= 0; i-- ) {
+				if ( Math.round( graves[ i ].x - graveWidth ) < Math.round( this.x ) && Math.round( graves[ i ].x + graveWidth ) > Math.round( this.x ) )
+					grave = i;
+			}
+
+			if ( grave === false )
+				new Grave( this.x );
+			else
+				graves[ grave ].dig();
 
 		};
 
@@ -131,7 +225,7 @@ window.addEventListener('load', function () {
 
 		Man.prototype.update = function () {
 
-			var friction = 0.1;
+			var friction = 0.15;
 
 			if ( this.speed > 0 )
 				this.speed -= friction;
@@ -189,13 +283,18 @@ window.addEventListener('load', function () {
 			this.children.push( child );
 		};
 
+		Stage.prototype.removeChild = function ( child ) {
+			if ( this.children.indexOf( child ) !== -1 )
+				this.children.splice( this.children.indexOf( child ), 1 );
+		};
+
 		Stage.prototype.render = function () {
 
 			var i;
 
 			this.context.clearRect( 0, 0, this.width, this.height );
 
-			for ( i = this.children.length - 1; i >= 0; i-- ) {
+			for ( i = 0; i < this.children.length; i++ ) {
 				this.children[ i ].render();
 			}
 
@@ -306,6 +405,10 @@ window.addEventListener('load', function () {
 
 	ground = new Rectangle( 0, 411, stage.defaultWidth, 39 );
 
+	controls.addAction( 32, function () {
+		player.dig();
+	});
+
 	controls.addAction( [ 37, 65 ], function () {
 		player.influenceSpeed( 1 );
 	});
@@ -314,9 +417,9 @@ window.addEventListener('load', function () {
 		player.influenceSpeed( -1 );
 	});
 
-	stage.addChild( player );
-	stage.addChild( ground );
 	stage.addChild( cliff );
+	stage.addChild( ground );
+	stage.addChild( player );
 
 	stage.resize();
 
