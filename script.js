@@ -63,15 +63,24 @@ window.addEventListener('load', function () {
 			this.y = 0;
 			this.width = 18;
 			this.height = 32;
+			this.speed = 0;
 
 		};
 
 		Man.prototype.drawTile = function ( index, x, y, width, height ) {
-			stage.context.drawImage( this.sprite, 18 * index, 0, 18, 32, this.getX(), this.getY(), this.getWidth(), this.getHeight() );
+			stage.context.drawImage( this.sprite, 18 * index, 0, 18, 32, x, y, this.getWidth(), this.getHeight() );
 		};
 
 		Man.prototype.render = function () {
-			this.drawTile( this.tileIndex, this.getX(), this.getY(), 18, 32 );
+			if ( this.speed < 0 ) {
+				stage.context.save();
+				stage.context.translate(stage.width, 0);
+				stage.context.scale( -1, 1 );
+				this.drawTile( this.tileIndex, stage.width - this.getX() - 14, this.getY(), 18, 32 );
+				stage.context.restore();
+			} else {
+				this.drawTile( this.tileIndex, this.getX() - 14, this.getY(), 18, 32 );
+			}
 		};
 
 		Man.prototype.getX = function () {
@@ -91,11 +100,57 @@ window.addEventListener('load', function () {
 		};
 
 		Man.prototype.setX = function ( value ) {
+
 			this.x = value;
+
+			if ( this.x > stage.defaultWidth - this.width )
+				this.x = stage.defaultWidth - this.width;
+
+			if ( this.x < 0 )
+				this.x = 0;
+
 		};
 
 		Man.prototype.setY = function ( value ) {
 			this.y = value;
+		};
+
+		Man.prototype.update = function () {
+
+			var friction = 0.1;
+
+			if ( this.speed > 0 )
+				this.speed -= friction;
+
+			else if ( this.speed < 0 )
+				this.speed += friction;
+
+			if ( this.speed > 0 && this.speed - friction < 0 )
+				this.speed = 0;
+
+			else if ( this.speed < 0 && this.speed + friction > 0 )
+				this.speed = 0;
+
+			if ( this.speed == 0 )
+				this.tileIndex = 0;
+
+			this.setX( this.x - this.speed );
+
+		};
+
+		Man.prototype.influenceSpeed = function ( value ) {
+
+			var max_speed = 4,
+				min_speed = -4;
+
+			this.speed += value;
+
+			if ( this.speed > max_speed )
+				this.speed = max_speed;
+
+			if ( this.speed < min_speed )
+				this.speed = min_speed;
+
 		};
 
 		return Man;
@@ -149,6 +204,16 @@ window.addEventListener('load', function () {
 
 		};
 
+		Stage.prototype.update = function () {
+
+			var i;
+
+			for ( i = this.children.length - 1; i >= 0; i-- ) {
+				this.children[ i ].update();
+			}
+
+		};
+
 		return Stage;
 
 	})();
@@ -164,11 +229,11 @@ window.addEventListener('load', function () {
 	player.setY( 380 );
 
 	controls.addAction( 37, function () {
-		player.setX( player.x - 2 );
+		player.influenceSpeed( 1 );
 	});
 
 	controls.addAction( 39, function () {
-		player.setX( player.x + 2 );
+		player.influenceSpeed( -1 );
 	});
 
 	stage.addChild( player );
@@ -193,6 +258,13 @@ window.addEventListener('load', function () {
 		controls.release( e.which );
 	}, false);
 
+	setInterval(function () {
+		player.tileIndex += 1;
+		if ( player.tileIndex > 6 )
+			player.tileIndex = 1;
+	}, 100);
+
 	setInterval( controls.react.bind( controls ), 50 );
+	setInterval( stage.update.bind( stage ), 10 );
 
 }, false);
