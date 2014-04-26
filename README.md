@@ -22,7 +22,7 @@ An entry for Ludum Dare 29 48h compo
 *   Game where the player has to determine which one of the NPCs is good in
     the world of baddies.
 
-*   Multiplayer game where players have to <insert blank>. Upon connecting to
+*   Multiplayer game where players have to [insert action]. Upon connecting to
     the server player receives a message along the lines of "Everyone in this
-    world is bad. You are the only good one. Do <insert blank> to save the
+    world is bad. You are the only good one. Do [insert action] to save the
     world". Every player gets this message.
