@@ -2,12 +2,15 @@ window.addEventListener('load', function () {
 	'use strict';
 
 	var canvas = document.getElementsByTagName('canvas')[0],
+		cliff,
 		Controls,
 		controls,
 		Stage,
 		stage,
 		Man,
 		player,
+		Rectangle,
+		ground,
 		sprite;
 
 	Controls = (function () {
@@ -18,8 +21,19 @@ window.addEventListener('load', function () {
 		};
 
 		Controls.prototype.addAction = function ( key, action ) {
-			this.actions[ key ] = this.actions[ key ] || [];
-			this.actions[ key ].push( action );
+
+			var i;
+
+			if ( Array.isArray( key ) ) {
+				for ( i = key.length - 1; i >= 0; i-- ) {
+					this.actions[ key[ i ] ] = this.actions[ key ] || [];
+					this.actions[ key[ i ] ].push( action );
+				}
+			} else {
+					this.actions[ key ] = this.actions[ key ] || [];
+					this.actions[ key ].push( action );
+			}
+
 		};
 
 		Controls.prototype.press = function ( value ) {
@@ -76,10 +90,10 @@ window.addEventListener('load', function () {
 				stage.context.save();
 				stage.context.translate(stage.width, 0);
 				stage.context.scale( -1, 1 );
-				this.drawTile( this.tileIndex, stage.width - this.getX() - 14, this.getY(), 18, 32 );
+				this.drawTile( this.tileIndex, stage.width - this.getX() - 10 * stage.coef,  this.getY(), 18, 32 );
 				stage.context.restore();
 			} else {
-				this.drawTile( this.tileIndex, this.getX() - 14, this.getY(), 18, 32 );
+				this.drawTile( this.tileIndex, this.getX() - 10 * stage.coef, this.getY(), 18, 32 );
 			}
 		};
 
@@ -103,11 +117,11 @@ window.addEventListener('load', function () {
 
 			this.x = value;
 
-			if ( this.x > stage.defaultWidth - this.width )
-				this.x = stage.defaultWidth - this.width;
+			if ( this.x > stage.defaultWidth - this.width / 2 )
+				this.x = stage.defaultWidth - this.width / 2;
 
-			if ( this.x < 0 )
-				this.x = 0;
+			if ( this.x < 42 )
+				this.x = 42;
 
 		};
 
@@ -209,12 +223,52 @@ window.addEventListener('load', function () {
 			var i;
 
 			for ( i = this.children.length - 1; i >= 0; i-- ) {
-				this.children[ i ].update();
+				if ( this.children[ i ].update )
+					this.children[ i ].update();
 			}
 
 		};
 
 		return Stage;
+
+	})();
+
+	Rectangle = (function () {
+
+		var Rectangle = function ( x, y, width, height ) {
+
+			this.x = x;
+			this.y = y;
+			this.width = width;
+			this.height = height;
+
+		};
+
+		Rectangle.prototype.getX = function () {
+			return Math.round( this.x * stage.coef );
+		};
+
+		Rectangle.prototype.getY = function () {
+			return Math.round( this.y * stage.coef );
+		};
+
+		Rectangle.prototype.getWidth = function () {
+			return Math.round( this.width * stage.coef );
+		};
+
+		Rectangle.prototype.getHeight = function () {
+			return Math.round( this.height * stage.coef );
+		};
+
+		Rectangle.prototype.render = function () {
+			stage.context.beginPath();
+			stage.context.rect( this.getX(), this.getY(), this.getWidth(), this.getHeight() );
+			stage.context.fillStyle = '#1F0D0D';
+			stage.context.fill();
+			stage.context.closePath();
+		};
+
+		return Rectangle;
 
 	})();
 
@@ -228,15 +282,41 @@ window.addEventListener('load', function () {
 	player.setX( 400 );
 	player.setY( 380 );
 
-	controls.addAction( 37, function () {
+	cliff = new Rectangle( 0, 40, 40, 400 );
+
+	cliff.render = function () {
+
+		var prev = 1,
+			last = 10,
+			i;
+
+		stage.context.beginPath();
+		stage.context.rect( this.getX(), this.getY(), this.getWidth(), this.getHeight() );
+		stage.context.fillStyle = '#1F0D0D';
+		stage.context.fill();
+		stage.context.closePath();
+
+		for ( i = 10; i >= 0; i-- ) {
+			stage.context.clearRect( this.getX() + this.getWidth() - ( 11 - i ) * 2, this.getY() + prev, 2, stage.height );
+			stage.context.clearRect( this.getX() + this.getWidth() - ( 11 - i ) * 2, this.getY() + last, 2, stage.height );
+			prev = prev + last;
+			last = prev + last;
+		}
+	};
+
+	ground = new Rectangle( 0, 411, stage.defaultWidth, 39 );
+
+	controls.addAction( [ 37, 65 ], function () {
 		player.influenceSpeed( 1 );
 	});
 
-	controls.addAction( 39, function () {
+	controls.addAction( [ 39, 68 ], function () {
 		player.influenceSpeed( -1 );
 	});
 
 	stage.addChild( player );
+	stage.addChild( ground );
+	stage.addChild( cliff );
 
 	stage.resize();
 
@@ -259,9 +339,11 @@ window.addEventListener('load', function () {
 	}, false);
 
 	setInterval(function () {
-		player.tileIndex += 1;
-		if ( player.tileIndex > 6 )
-			player.tileIndex = 1;
+		if ( player.speed !== 0 ) {
+			player.tileIndex += 1;
+			if ( player.tileIndex > 6 )
+				player.tileIndex = 1;
+		}
 	}, 100);
 
 	setInterval( controls.react.bind( controls ), 50 );

@@ -5,14 +5,15 @@ An entry for Ludum Dare 29 48h compo
 ## Final idea (before starting code)
 
 *   The player is an undertaker struggling to dig a grave for every executed
-    prisoner/friend/fellow-human-being. The executioner stands on a hill
-    and shoots every victim. While he's preparing for the execution, player
-    sees an outline of the fall-path of the corpse. He has to dig the grave
-    on that spot. If he succeeds, the grave digs itself up and a gravestone
-    (cross) spawns on top of it. The undertaker has to collect crosses. If
-    he fails to dig the hole on time, the corpse spatters on the ground
-    (splat!), and an evil spirit rises, that attacks the undertaker to steal
-    one of his crosses and flies off carrying it away to hell (or  heaven).
+    prisoner/friend/fellow-human-being. The executioner stands on a cliff
+    and smacks the victim in the head with his shovel. While he's preparing
+    for the execution, player sees an outline of the fall-path of the corpse.
+    He has to dig the grave on that spot. If he succeeds, the grave covers
+    itself up and a gravestone (cross) spawns on top of it. The undertaker
+    has to collect crosses. If he fails to dig the hole on time, the corpse
+    spatters on the ground (splat!), and an evil spirit rises, that attacks
+    the undertaker to steal one of his crosses and flies off carrying it away
+    to hell (or  heaven).
 
 ## Initial ideas
 
